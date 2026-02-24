@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Link, useNavigate, Navigate } from "react-router-dom";
-import { ArrowLeft, Upload as UploadIcon, Image, Film, FileBox, ExternalLink, Check, Loader2, ShieldAlert, AlertCircle } from "lucide-react";
+import { ArrowLeft, Image, Film, FileBox, ExternalLink, Check, Loader2, AlertCircle, Settings } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile, createExperience } from "@/lib/arStorage";
+import { useVideoCompressor } from "@/hooks/useVideoCompressor";
 
 interface UploadedFile {
   file: File;
@@ -23,16 +24,26 @@ const Upload = () => {
   const [uploadProgress, setUploadProgress] = useState("");
   const [error, setError] = useState("");
 
+  const { compress, isCompressing, progress: compressProgress, status: compressStatus } = useVideoCompressor();
+
   const onDropImage = useCallback((files: File[]) => {
     if (files[0]) {
-      setTargetImage({ file: files[0], preview: URL.createObjectURL(files[0]) });
+      const file = files[0];
+      setTargetImage({ 
+        file, 
+        preview: URL.createObjectURL(file) 
+      });
       setError("");
     }
   }, []);
 
-  const onDropVideo = useCallback((files: File[]) => {
+  const onDropVideo = useCallback(async (files: File[]) => {
     if (files[0]) {
-      setVideo({ file: files[0], preview: URL.createObjectURL(files[0]) });
+      const file = files[0];
+      const preview = URL.createObjectURL(file);
+      
+      // Mostrar preview imediatamente
+      setVideo({ file, preview });
       setError("");
     }
   }, []);
@@ -45,7 +56,7 @@ const Upload = () => {
   }, []);
 
   const imageDropzone = useDropzone({ onDrop: onDropImage, accept: { "image/*": [".jpg", ".jpeg", ".png"] }, maxFiles: 1 });
-  const videoDropzone = useDropzone({ onDrop: onDropVideo, accept: { "video/*": [".mp4", ".webm"] }, maxFiles: 1 });
+  const videoDropzone = useDropzone({ onDrop: onDropVideo, accept: { "video/*": [".mp4", ".webm", ".mov", ".avi", ".mkv"] }, maxFiles: 1 });
   const mindDropzone = useDropzone({ onDrop: onDropMind, maxFiles: 1 });
 
   if (loading) return null;
@@ -60,6 +71,13 @@ const Upload = () => {
     setError("");
 
     try {
+      // Comprimir vídeo se necessário
+      let videoFile = video.file;
+      if (video.file.size > 50 * 1024 * 1024) {
+        setUploadProgress("Comprimindo vídeo...");
+        videoFile = await compress(video.file);
+      }
+
       // Upload da imagem target
       setUploadProgress("Enviando imagem target...");
       const targetResult = await uploadFile(user.id, "targets", targetImage.file);
@@ -68,7 +86,7 @@ const Upload = () => {
 
       // Upload do vídeo
       setUploadProgress("Enviando vídeo...");
-      const videoResult = await uploadFile(user.id, "videos", video.file);
+      const videoResult = await uploadFile(user.id, "videos", videoFile);
       if (videoResult.error) throw new Error(videoResult.error);
       if (!videoResult.url) throw new Error("Falha no upload do vídeo");
 
@@ -125,6 +143,22 @@ const Upload = () => {
           </div>
         )}
 
+        {/* Indicador de compressão */}
+        {isCompressing && (
+          <div className="mb-6 bg-primary/10 border border-primary/30 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Settings className="w-5 h-5 text-primary animate-spin" />
+              <span className="text-primary font-medium text-sm">{compressStatus}</span>
+            </div>
+            <div className="w-full bg-primary/20 rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${compressProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-8">
           {[1, 2, 3].map((s) => (
@@ -147,7 +181,7 @@ const Upload = () => {
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Campanha 2026" className="w-full bg-input border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50" />
             </div>
             <DropZone dropzone={imageDropzone} icon={<Image className="w-8 h-8 text-primary" />} label="Imagem Target" hint="JPG ou PNG — mínimo 800×800px com boa textura" file={targetImage} preview={targetImage?.preview} type="image" />
-            <DropZone dropzone={videoDropzone} icon={<Film className="w-8 h-8 text-primary" />} label="Vídeo" hint="MP4 ou WebM — máximo 150 MB" file={video} preview={video?.preview} type="video" />
+            <DropZone dropzone={videoDropzone} icon={<Film className="w-8 h-8 text-primary" />} label="Vídeo" hint="MP4, WebM, MOV, AVI ou MKV — vídeos grandes serão comprimidos automaticamente" file={video} preview={video?.preview} type="video" />
             <button onClick={() => setStep(2)} disabled={!canProceedStep1} className="w-full bg-primary text-primary-foreground font-display font-bold text-sm tracking-wider py-4 rounded-lg glow hover:glow-strong transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none">
               PRÓXIMO → COMPILAR TARGET
             </button>
@@ -187,7 +221,7 @@ const Upload = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Título</span><span className="text-foreground">{title || "Sem título"}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Imagem Target</span><span className="text-primary">{targetImage?.file.name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Vídeo</span><span className="text-primary">{video?.file.name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Vídeo</span><span className="text-primary">{video?.file.name} ({(video?.file.size! / 1024 / 1024).toFixed(1)} MB)</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Target .mind</span><span className="text-primary">{mindFile?.file.name}</span></div>
               </div>
               {targetImage && (
@@ -207,7 +241,7 @@ const Upload = () => {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="flex-1 border border-border text-muted-foreground font-display font-bold text-sm tracking-wider py-4 rounded-lg hover:border-primary/30 hover:text-foreground transition-all">VOLTAR</button>
-              <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 bg-primary text-primary-foreground font-display font-bold text-sm tracking-wider py-4 rounded-lg glow hover:glow-strong transition-all disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={isSubmitting || isCompressing} className="flex-1 bg-primary text-primary-foreground font-display font-bold text-sm tracking-wider py-4 rounded-lg glow hover:glow-strong transition-all disabled:opacity-50">
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />{uploadProgress || "ENVIANDO..."}
