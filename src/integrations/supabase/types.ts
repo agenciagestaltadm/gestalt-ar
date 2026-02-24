@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ar_experiences: {
+        Row: {
+          created_at: string
+          id: string
+          mind_file_url: string
+          target_image_url: string
+          title: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mind_file_url: string
+          target_image_url: string
+          title?: string
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mind_file_url?: string
+          target_image_url?: string
+          title?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

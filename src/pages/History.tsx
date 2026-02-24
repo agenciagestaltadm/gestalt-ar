@@ -1,15 +1,33 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Camera, Trash2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { ArrowLeft, Camera, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { getExperiences, deleteExperience } from "@/lib/arStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { getExperiences, deleteExperience, ArExperience } from "@/lib/arStorage";
 
 const History = () => {
-  const [experiences, setExperiences] = useState(getExperiences());
+  const { user, loading: authLoading } = useAuth();
+  const [experiences, setExperiences] = useState<ArExperience[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    deleteExperience(id);
-    setExperiences(getExperiences());
+  useEffect(() => {
+    if (user) {
+      getExperiences(user.id).then((data) => {
+        setExperiences(data);
+        setLoading(false);
+      });
+    }
+  }, [user]);
+
+  if (authLoading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
+
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    await deleteExperience(id, user.id);
+    setExperiences((prev) => prev.filter((e) => e.id !== id));
+    setDeleting(null);
   };
 
   return (
@@ -29,7 +47,11 @@ const History = () => {
           SUAS <span className="text-primary text-glow">EXPERIÊNCIAS</span>
         </h1>
 
-        {experiences.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        ) : experiences.length === 0 ? (
           <div className="text-center py-16">
             <Camera className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Nenhuma experiência AR criada ainda.</p>
@@ -41,21 +63,25 @@ const History = () => {
           <div className="space-y-3">
             {experiences.map((exp) => (
               <div key={exp.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 hover:border-primary/20 transition-all">
-                <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                  <Camera className="w-5 h-5 text-primary" />
+                <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+                  <img src={exp.target_image_url} alt={exp.title} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{exp.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(exp.createdAt).toLocaleDateString("pt-BR")} · ID: {exp.id}
+                    {new Date(exp.created_at).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 <div className="flex gap-1">
                   <Link to={`/ar/${exp.id}`} className="p-2 text-muted-foreground hover:text-primary transition-colors">
                     <ExternalLink className="w-4 h-4" />
                   </Link>
-                  <button onClick={() => handleDelete(exp.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-4 h-4" />
+                  <button
+                    onClick={() => handleDelete(exp.id)}
+                    disabled={deleting === exp.id}
+                    className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                  >
+                    {deleting === exp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
