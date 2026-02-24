@@ -53,14 +53,15 @@ const ArViewer = () => {
     const existingScene = container.querySelector("a-scene");
     if (existingScene) existingScene.remove();
 
-    // Create a-scene dynamically
+    // Create a-scene dynamically with improved MindAR settings
     const scene = document.createElement("a-scene");
-    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiError: no; uiScanning: no;`);
+    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiError: no; uiScanning: no;`);
     scene.setAttribute("color-space", "sRGB");
     scene.setAttribute("renderer", "colorManagement: true, physicallyCorrectLights");
     scene.setAttribute("vr-mode-ui", "enabled: false");
     scene.setAttribute("device-orientation-permission-ui", "enabled: false");
     scene.setAttribute("embedded", "");
+    scene.classList.add("ar-container");
 
     const camera = document.createElement("a-camera");
     camera.setAttribute("position", "0 0 0");
@@ -80,15 +81,18 @@ const ArViewer = () => {
     videoEl.setAttribute("crossorigin", "anonymous");
     videoEl.setAttribute("playsinline", "");
     videoEl.setAttribute("webkit-playsinline", "");
+    videoEl.setAttribute("muted", "false");
     assets.appendChild(videoEl);
     scene.appendChild(assets);
 
-    // Create video plane
+    // Create video plane with correct positioning to overlay on target
     const plane = document.createElement("a-video");
     plane.setAttribute("src", "#ar-video");
     plane.setAttribute("width", "1");
     plane.setAttribute("height", "0.552");
     plane.setAttribute("position", "0 0 0");
+    plane.setAttribute("rotation", "0 0 0");
+    plane.setAttribute("scale", "1 1 1");
     anchor.appendChild(plane);
 
     scene.appendChild(anchor);
@@ -139,8 +143,8 @@ const ArViewer = () => {
 
   if (cameraStarted) {
     return (
-      <div className="fixed inset-0">
-        <div ref={arContainerRef} className="w-full h-full" />
+      <div className="fixed inset-0 overflow-hidden">
+        <div ref={arContainerRef} className="ar-container w-full h-full" />
         {/* Back button overlay */}
         <button
           onClick={() => {
