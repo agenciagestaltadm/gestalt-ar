@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Link, useNavigate, Navigate } from "react-router-dom";
-import { ArrowLeft, Upload as UploadIcon, Image, Film, FileBox, ExternalLink, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload as UploadIcon, Image, Film, FileBox, ExternalLink, Check, Loader2, ShieldAlert } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile, createExperience } from "@/lib/arStorage";
+
+const ALLOWED_EMAILS = ["gestaltartecnologia@gmail.com"];
 
 interface UploadedFile {
   file: File;
@@ -46,6 +48,21 @@ const Upload = () => {
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
+
+  if (!ALLOWED_EMAILS.includes(user.email || "")) {
+    return (
+      <div className="min-h-screen bg-background bg-grid flex flex-col items-center justify-center px-6">
+        <ShieldAlert className="w-12 h-12 text-destructive mb-4" />
+        <h1 className="font-display text-xl font-bold mb-2">ACESSO RESTRITO</h1>
+        <p className="text-muted-foreground text-sm text-center mb-6">
+          Seu email ({user.email}) não tem permissão para fazer upload.
+        </p>
+        <Link to="/" className="bg-primary text-primary-foreground font-display font-bold text-xs tracking-wider py-3 px-6 rounded-lg glow">
+          VOLTAR AO INÍCIO
+        </Link>
+      </div>
+    );
+  }
 
   const canProceedStep1 = targetImage && video;
   const canProceedStep2 = mindFile;
