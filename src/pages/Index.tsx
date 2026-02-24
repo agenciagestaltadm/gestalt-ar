@@ -1,15 +1,24 @@
-import { useState } from "react"; 
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { Upload, Camera, History, ArrowRight, Sparkles, Eye } from "lucide-react";
+import { Upload, Camera, History, ArrowRight, Sparkles, Eye, Loader2 } from "lucide-react";
+import { getAllExperiences, ArExperience } from "@/lib/arStorage";
 
 const Index = () => {
   const [arInput, setArInput] = useState("");
+  const [experiences, setExperiences] = useState<ArExperience[]>([]);
+  const [loadingExp, setLoadingExp] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getAllExperiences().then((exps) => {
+      setExperiences(exps);
+      setLoadingExp(false);
+    });
+  }, []);
 
   const handleViewAr = () => {
     if (!arInput.trim()) return;
-    // Extract ID from full URL or use raw input
     const match = arInput.trim().match(/\/ar\/([a-zA-Z0-9-]+)/);
     const id = match ? match[1] : arInput.trim();
     navigate(`/ar/${id}`);
@@ -91,6 +100,48 @@ const Index = () => {
             <Eye className="w-5 h-5" />
             VER AR
           </button>
+        </div>
+
+        {/* Public AR Experiences Gallery */}
+        <div className="w-full max-w-4xl mt-16">
+          <h2 className="font-display text-sm font-bold tracking-wider text-muted-foreground mb-6 text-center">
+            EXPERIÊNCIAS DISPONÍVEIS
+          </h2>
+          {loadingExp ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : experiences.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-8">
+              Nenhuma experiência AR criada ainda.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {experiences.map((exp) => (
+                <Link
+                  key={exp.id}
+                  to={`/ar/${exp.id}`}
+                  className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/30 hover:glow transition-all duration-300"
+                >
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={exp.target_image_url}
+                      alt={exp.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-medium text-foreground truncate">{exp.title}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Camera className="w-3 h-3 text-primary" />
+                      <span className="text-xs text-primary">Escanear</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Feature cards */}
