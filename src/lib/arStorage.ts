@@ -10,6 +10,11 @@ export interface ArExperience {
   created_at: string;
 }
 
+export interface UploadResult {
+  url: string | null;
+  error: string | null;
+}
+
 export async function getExperiences(userId: string): Promise<ArExperience[]> {
   const { data, error } = await supabase
     .from("ar_experiences")
@@ -86,10 +91,22 @@ export async function uploadFile(
   userId: string,
   folder: string,
   file: File
-): Promise<string | null> {
+): Promise<UploadResult> {
+  // Verificar se o usuário está autenticado
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { url: null, error: "Você precisa estar logado para fazer upload." };
+  }
+
+  if (user.id !== userId) {
+    return { url: null, error: "ID de usuário não corresponde à sessão." };
+  }
+
   const timestamp = Date.now();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${userId}/${folder}/${timestamp}_${safeName}`;
+
+  console.log(`Uploading to: ${path}`);
 
   const { error } = await supabase.storage
     .from("ar-files")
@@ -97,11 +114,21 @@ export async function uploadFile(
 
   if (error) {
     console.error("Upload error:", error);
-    return null;
+    
+    // Traduzir mensagens de erro comuns
+    if (error.message.includes("policy")) {
+      return { url: null, error: "Sem permissão para upload. Verifique se está logado." };
+    }
+    if (error.message.includes("bucket")) {
+      return { url: null, error: "Bucket de armazenamento não encontrado." };
+    }
+    
+    return { url: null, error: `Erro no upload: ${error.message}` };
   }
 
   const { data } = supabase.storage.from("ar-files").getPublicUrl(path);
-  return data.publicUrl;
+  console.log(`Upload successful: ${data.publicUrl}`);
+  return { url: data.publicUrl, error: null };
 }
 
 export async function createExperience(
@@ -110,7 +137,17 @@ export async function createExperience(
   targetImageUrl: string,
   videoUrl: string,
   mindFileUrl: string
-): Promise<string | null> {
+): Promise<{ id: string | null; error: string | null }> {
+  // Verificar se o usuário está autenticado
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { id: null, error: "Você precisa estar logado para criar uma experiência." };
+  }
+
+  if (user.id !== userId) {
+    return { id: null, error: "ID de usuário não corresponde à sessão." };
+  }
+
   const { data, error } = await supabase
     .from("ar_experiences")
     .insert({
@@ -125,7 +162,15 @@ export async function createExperience(
 
   if (error) {
     console.error("Error creating experience:", error);
-    return null;
+    
+    // Traduzir mensagens de erro comuns
+    if (error.message.includes("policy") || error.code === "42501") {
+      return { id: null, error: "Sem permissão para salvar. Verifique se está logado." };
+    }
+    
+    return { id: null, error: `Erro ao salvar: ${error.message}` };
   }
-  return data.id;
+  
+  console.log(`Experience created with ID: ${data.id}`);
+  return { id: data.id, error: null };
 }

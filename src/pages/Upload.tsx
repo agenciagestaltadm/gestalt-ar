@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Link, useNavigate, Navigate } from "react-router-dom";
-import { ArrowLeft, Upload as UploadIcon, Image, Film, FileBox, ExternalLink, Check, Loader2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Upload as UploadIcon, Image, Film, FileBox, ExternalLink, Check, Loader2, ShieldAlert, AlertCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile, createExperience } from "@/lib/arStorage";
@@ -21,22 +21,26 @@ const Upload = () => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [error, setError] = useState("");
 
   const onDropImage = useCallback((files: File[]) => {
     if (files[0]) {
       setTargetImage({ file: files[0], preview: URL.createObjectURL(files[0]) });
+      setError("");
     }
   }, []);
 
   const onDropVideo = useCallback((files: File[]) => {
     if (files[0]) {
       setVideo({ file: files[0], preview: URL.createObjectURL(files[0]) });
+      setError("");
     }
   }, []);
 
   const onDropMind = useCallback((files: File[]) => {
     if (files[0]) {
       setMindFile({ file: files[0], preview: URL.createObjectURL(files[0]) });
+      setError("");
     }
   }, []);
 
@@ -53,28 +57,46 @@ const Upload = () => {
   const handleSubmit = async () => {
     if (!targetImage || !video || !mindFile || !user) return;
     setIsSubmitting(true);
+    setError("");
 
     try {
+      // Upload da imagem target
       setUploadProgress("Enviando imagem target...");
-      const targetUrl = await uploadFile(user.id, "targets", targetImage.file);
-      if (!targetUrl) throw new Error("Falha no upload da imagem");
+      const targetResult = await uploadFile(user.id, "targets", targetImage.file);
+      if (targetResult.error) throw new Error(targetResult.error);
+      if (!targetResult.url) throw new Error("Falha no upload da imagem");
 
+      // Upload do vídeo
       setUploadProgress("Enviando vídeo...");
-      const videoUrl = await uploadFile(user.id, "videos", video.file);
-      if (!videoUrl) throw new Error("Falha no upload do vídeo");
+      const videoResult = await uploadFile(user.id, "videos", video.file);
+      if (videoResult.error) throw new Error(videoResult.error);
+      if (!videoResult.url) throw new Error("Falha no upload do vídeo");
 
+      // Upload do arquivo .mind
       setUploadProgress("Enviando arquivo .mind...");
-      const mindUrl = await uploadFile(user.id, "minds", mindFile.file);
-      if (!mindUrl) throw new Error("Falha no upload do .mind");
+      const mindResult = await uploadFile(user.id, "minds", mindFile.file);
+      if (mindResult.error) throw new Error(mindResult.error);
+      if (!mindResult.url) throw new Error("Falha no upload do .mind");
 
+      // Salvar experiência no banco
       setUploadProgress("Salvando experiência...");
-      const id = await createExperience(user.id, title || "Sem título", targetUrl, videoUrl, mindUrl);
-      if (!id) throw new Error("Falha ao salvar experiência");
+      const expResult = await createExperience(
+        user.id,
+        title || "Sem título",
+        targetResult.url,
+        videoResult.url,
+        mindResult.url
+      );
+      if (expResult.error) throw new Error(expResult.error);
+      if (!expResult.id) throw new Error("Falha ao salvar experiência");
 
-      navigate(`/ar/${id}`);
+      setUploadProgress("Sucesso!");
+      navigate(`/ar/${expResult.id}`);
     } catch (err: any) {
-      console.error(err);
-      setUploadProgress(`Erro: ${err.message}`);
+      console.error("Upload error:", err);
+      setError(err.message || "Erro desconhecido ao fazer upload");
+      setUploadProgress("");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -92,6 +114,17 @@ const Upload = () => {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-8 pb-28 md:pb-8">
+        {/* Mensagem de erro global */}
+        {error && (
+          <div className="mb-6 bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="text-destructive font-medium text-sm">Erro ao enviar</p>
+              <p className="text-destructive/80 text-xs mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-8">
           {[1, 2, 3].map((s) => (
