@@ -86,3 +86,21 @@
     background-size: 40px 40px;
   }
 }
+
+/* AR Scene fullscreen */
+a-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1 !important;
+}
+
+a-scene canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+a-scene video {
+  object-fit: cover !important;
+}

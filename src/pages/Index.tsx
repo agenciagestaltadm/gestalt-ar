@@ -1,8 +1,20 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { Upload, Camera, History, ArrowRight, Sparkles } from "lucide-react";
+import { Upload, Camera, History, ArrowRight, Sparkles, Eye } from "lucide-react";
 
 const Index = () => {
+  const [arInput, setArInput] = useState("");
+  const navigate = useNavigate();
+
+  const handleViewAr = () => {
+    if (!arInput.trim()) return;
+    // Extract ID from full URL or use raw input
+    const match = arInput.trim().match(/\/ar\/([a-zA-Z0-9-]+)/);
+    const id = match ? match[1] : arInput.trim();
+    navigate(`/ar/${id}`);
+  };
+
   return (
     <div className="min-h-screen bg-background bg-grid relative overflow-hidden">
       {/* Ambient glow effects */}
@@ -59,13 +71,26 @@ const Index = () => {
             ENVIAR VÍDEO
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link
-            to="/ar/demo"
-            className="flex-1 flex items-center justify-center gap-3 border border-primary/30 text-primary font-display font-bold text-sm tracking-wider py-4 px-6 rounded-lg border-glow hover:bg-primary/5 transition-all duration-300"
+        </div>
+
+        {/* VER AR input */}
+        <div className="flex w-full max-w-md mt-4 gap-2">
+          <input
+            type="text"
+            value={arInput}
+            onChange={(e) => setArInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleViewAr()}
+            placeholder="Cole o ID ou link da experiência AR"
+            className="flex-1 bg-input border border-border rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+          />
+          <button
+            onClick={handleViewAr}
+            disabled={!arInput.trim()}
+            className="flex items-center gap-2 border border-primary/30 text-primary font-display font-bold text-sm tracking-wider py-3 px-6 rounded-lg border-glow hover:bg-primary/5 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <Camera className="w-5 h-5" />
-            VER DEMO AR
-          </Link>
+            <Eye className="w-5 h-5" />
+            VER AR
+          </button>
         </div>
 
         {/* Feature cards */}

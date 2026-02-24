@@ -55,11 +55,12 @@ const ArViewer = () => {
 
     // Create a-scene dynamically
     const scene = document.createElement("a-scene");
-    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; uiLoading: no; uiError: no; uiScanning: no;`);
+    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; filterMinCF: 0.0001; filterBeta: 1000; uiLoading: no; uiError: no; uiScanning: no;`);
     scene.setAttribute("color-space", "sRGB");
     scene.setAttribute("renderer", "colorManagement: true, physicallyCorrectLights");
     scene.setAttribute("vr-mode-ui", "enabled: false");
     scene.setAttribute("device-orientation-permission-ui", "enabled: false");
+    scene.setAttribute("embedded", "");
 
     const camera = document.createElement("a-camera");
     camera.setAttribute("position", "0 0 0");
@@ -138,7 +139,7 @@ const ArViewer = () => {
 
   if (cameraStarted) {
     return (
-      <div className="fixed inset-0 bg-background">
+      <div className="fixed inset-0">
         <div ref={arContainerRef} className="w-full h-full" />
         {/* Back button overlay */}
         <button
