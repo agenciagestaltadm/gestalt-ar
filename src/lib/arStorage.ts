@@ -24,6 +24,19 @@ export async function getExperiences(userId: string): Promise<ArExperience[]> {
   return data as ArExperience[];
 }
 
+export async function getAllExperiences(): Promise<ArExperience[]> {
+  const { data, error } = await supabase
+    .from("ar_experiences")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching all experiences:", error);
+    return [];
+  }
+  return data as ArExperience[];
+}
+
 export async function getExperienceById(id: string): Promise<ArExperience | null> {
   const { data, error } = await supabase
     .from("ar_experiences")
