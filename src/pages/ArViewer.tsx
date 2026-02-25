@@ -89,10 +89,11 @@ const ArViewer = () => {
     const plane = document.createElement("a-video");
     plane.setAttribute("src", "#ar-video");
     plane.setAttribute("width", "1");
-    plane.setAttribute("height", "0.552");
-    plane.setAttribute("position", "0 0 0");
-    plane.setAttribute("rotation", "0 0 0");
+    plane.setAttribute("height", "0.5625"); // 16:9 aspect ratio
+    plane.setAttribute("position", "0 0 0.01"); // Slightly in front of target
+    plane.setAttribute("rotation", "-90 0 0"); // Parallel to target plane
     plane.setAttribute("scale", "1 1 1");
+    plane.setAttribute("visible", "true");
     anchor.appendChild(plane);
 
     scene.appendChild(anchor);

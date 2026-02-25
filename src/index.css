@@ -127,9 +127,20 @@ a-video {
   display: none !important;
 }
 
-/* Garante que a câmera ocupe toda a tela */
-video[src] {
+/* Vídeo da câmera do MindAR - deve preencher toda a tela como background */
+a-scene video {
   object-fit: cover !important;
   width: 100% !important;
   height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Vídeo AR dentro do A-Frame - não deve ter dimensões forçadas */
+a-video video,
+a-video {
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
 }
