@@ -87,16 +87,26 @@
   }
 }
 
-/* Garantir que html e body ocupem toda a tela */
+/* ========================================
+   BASE LAYOUT - Não interferir com scroll
+   ======================================== */
 html, body {
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* Removido overflow: hidden para permitir scroll normal */
 }
 
-/* Quando AR ativo, travar tudo */
+#root {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh; /* Dynamic viewport height para mobile */
+}
+
+/* ========================================
+   AR MODE - Ativado via body.ar-active
+   ======================================== */
 body.ar-active {
   overflow: hidden !important;
   position: fixed !important;
@@ -104,22 +114,34 @@ body.ar-active {
   height: 100% !important;
   top: 0 !important;
   left: 0 !important;
+  touch-action: none; /* Previne gestos do navegador */
 }
 
-/* AR Scene - container principal fullscreen */
+body.ar-active #root {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ========================================
+   AR CONTAINER - Fullscreen responsivo
+   ======================================== */
 .ar-container {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important; /* Dynamic viewport para mobile */
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
   z-index: 1 !important;
+  background: transparent !important;
 }
 
 /* A-Scene deve ocupar todo o container */
+.ar-container a-scene,
 .ar-scene {
   position: absolute !important;
   top: 0 !important;
@@ -130,7 +152,145 @@ body.ar-active {
   padding: 0 !important;
 }
 
+/* Vídeo e elementos AR com aspect-ratio correto */
+.ar-container video,
+.ar-container a-video,
+.ar-container a-plane {
+  object-fit: cover !important;
+}
+
+/* Canvas do A-Frame/MindAR */
+.ar-container canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
 /* Esconde UI do MindAR */
 .mindar-ui-overlay {
   display: none !important;
+}
+
+/* ========================================
+   RESPONSIVE - Mobile Portrait
+   ======================================== */
+@media screen and (max-width: 640px) and (orientation: portrait) {
+  /* Ajustar tamanhos de fonte */
+  h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  /* Botões maiores para touch */
+  button, 
+  a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Inputs maiores para touch */
+  input, 
+  textarea {
+    font-size: 16px !important; /* Previne zoom automático no iOS */
+  }
+  
+  /* AR container em portrait */
+  .ar-container {
+    width: 100vw !important;
+    height: 100dvh !important;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Mobile Landscape
+   ======================================== */
+@media screen and (max-width: 896px) and (orientation: landscape) {
+  /* AR container em landscape */
+  .ar-container {
+    width: 100vw !important;
+    height: 100dvh !important;
+    height: 100vh !important; /* Fallback */
+  }
+  
+  /* Ajustar header em landscape */
+  header {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Tablets
+   ======================================== */
+@media screen and (min-width: 641px) and (max-width: 1024px) {
+  /* Ajustes para tablets */
+  .ar-container {
+    width: 100vw !important;
+    height: 100dvh !important;
+  }
+}
+
+/* ========================================
+   SAFE AREA - Para dispositivos com notch
+   ======================================== */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  body.ar-active {
+    padding: 0 !important;
+  }
+  
+  /* Footer/Bottom nav com safe area */
+  nav.fixed-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
+   ANIMATIONS - Otimizadas para performance
+   ======================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ========================================
+   TOUCH OPTIMIZATIONS
+   ======================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Dispositivos touch */
+  .glow:hover,
+  .glow-strong:hover,
+  .border-glow:hover {
+    box-shadow: var(--glow-primary); /* Manter glow consistente */
+  }
+  
+  /* Remover hover effects que não funcionam em touch */
+  button:active,
+  a:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
 }
