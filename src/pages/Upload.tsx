@@ -110,9 +110,10 @@ const Upload = () => {
 
       setUploadProgress("Sucesso!");
       navigate(`/ar/${expResult.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      setError(err.message || "Erro desconhecido ao fazer upload");
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao fazer upload";
+      setError(errorMessage);
       setUploadProgress("");
     } finally {
       setIsSubmitting(false);
@@ -221,7 +222,7 @@ const Upload = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Título</span><span className="text-foreground">{title || "Sem título"}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Imagem Target</span><span className="text-primary">{targetImage?.file.name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Vídeo</span><span className="text-primary">{video?.file.name} ({(video?.file.size! / 1024 / 1024).toFixed(1)} MB)</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Vídeo</span><span className="text-primary">{video?.file.name} {video?.file.size ? `(${(video.file.size / 1024 / 1024).toFixed(1)} MB)` : ""}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Target .mind</span><span className="text-primary">{mindFile?.file.name}</span></div>
               </div>
               {targetImage && (

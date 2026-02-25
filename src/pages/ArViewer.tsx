@@ -36,11 +36,14 @@ const ArViewer = () => {
     if (!experience) return;
 
     // Check if MindAR scripts are loaded
-    if (!(window as any).AFRAME || !(window as any).MINDAR) {
+    const win = window as typeof window & { AFRAME?: unknown; MINDAR?: unknown };
+    if (!win.AFRAME || !win.MINDAR) {
       setArError("Carregando engine AR... Tente novamente em alguns segundos.");
       return;
     }
 
+    // Add class to body for AR mode styling
+    document.body.classList.add("ar-active");
     setCameraStarted(true);
   };
 
@@ -85,15 +88,14 @@ const ArViewer = () => {
     assets.appendChild(videoEl);
     scene.appendChild(assets);
 
-    // Create video plane with correct positioning to overlay on target
+    // Create video plane - MindAR Image controls positioning automatically
     const plane = document.createElement("a-video");
     plane.setAttribute("src", "#ar-video");
     plane.setAttribute("width", "1");
     plane.setAttribute("height", "0.5625"); // 16:9 aspect ratio
-    plane.setAttribute("position", "0 0 0.01"); // Slightly in front of target
-    plane.setAttribute("rotation", "-90 0 0"); // Parallel to target plane
+    plane.setAttribute("position", "0 0 0");
+    plane.setAttribute("rotation", "0 0 0"); // MindAR controls the orientation
     plane.setAttribute("scale", "1 1 1");
-    plane.setAttribute("visible", "true");
     anchor.appendChild(plane);
 
     scene.appendChild(anchor);
@@ -112,9 +114,10 @@ const ArViewer = () => {
       // Cleanup on unmount
       const sceneEl = container.querySelector("a-scene");
       if (sceneEl) {
-        const mindarSystem = (sceneEl as any).systems?.["mindar-image-system"];
-        if (mindarSystem) {
-          try { mindarSystem.stop(); } catch (e) { /* ignore */ }
+        const sceneWithSystems = sceneEl as typeof sceneEl & { systems?: Record<string, { stop?: () => void }> };
+        const mindarSystem = sceneWithSystems.systems?.["mindar-image-system"];
+        if (mindarSystem?.stop) {
+          try { mindarSystem.stop(); } catch { /* ignore */ }
         }
         sceneEl.remove();
       }
@@ -145,10 +148,11 @@ const ArViewer = () => {
   if (cameraStarted) {
     return (
       <div className="fixed inset-0 overflow-hidden">
-        <div ref={arContainerRef} className="ar-container w-full h-full" />
+        <div ref={arContainerRef} className="ar-container" />
         {/* Back button overlay */}
         <button
           onClick={() => {
+            document.body.classList.remove("ar-active");
             setCameraStarted(false);
             // Force page reload to clean up MindAR
             window.location.reload();

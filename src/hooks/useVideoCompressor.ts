@@ -119,9 +119,10 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       setProgress(100);
 
       return compressedFile;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro na compressão:", err);
-      setError(err.message || "Erro ao comprimir vídeo");
+      const errorMessage = err instanceof Error ? err.message : "Erro ao comprimir vídeo";
+      setError(errorMessage);
       setIsCompressing(false);
       throw err;
     }

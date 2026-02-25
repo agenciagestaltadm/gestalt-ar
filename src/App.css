@@ -1,4 +1,12 @@
 #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Container para páginas normais (não-AR) que precisam de centralização */
+.page-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -39,15 +47,4 @@
 
 .read-the-docs {
   color: #888;
-}
-
-/* Remove restrições para páginas AR em fullscreen */
-body:has(.ar-container),
-#root:has(.ar-container) {
-  max-width: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: hidden !important;
 }
