@@ -58,13 +58,13 @@ const ArViewer = () => {
 
     // Create a-scene dynamically with improved MindAR settings
     const scene = document.createElement("a-scene");
-    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; filterMinCF: 0.001; filterBeta: 100; uiLoading: no; uiError: no; uiScanning: no;`);
+    scene.setAttribute("mindar-image", `imageTargetSrc: ${experience.mind_file_url}; autoStart: true; filterMinCF: 0.0001; filterBeta: 0.001; uiLoading: no; uiError: no; uiScanning: no;`);
     scene.setAttribute("color-space", "sRGB");
     scene.setAttribute("renderer", "colorManagement: true, physicallyCorrectLights");
     scene.setAttribute("vr-mode-ui", "enabled: false");
     scene.setAttribute("device-orientation-permission-ui", "enabled: false");
     scene.setAttribute("embedded", "");
-    scene.classList.add("ar-container");
+    scene.classList.add("ar-scene");
 
     const camera = document.createElement("a-camera");
     camera.setAttribute("position", "0 0 0");
@@ -88,13 +88,13 @@ const ArViewer = () => {
     assets.appendChild(videoEl);
     scene.appendChild(assets);
 
-    // Create video plane - MindAR Image controls positioning automatically
+    // Create video plane - positioned to overlay on target image
     const plane = document.createElement("a-video");
     plane.setAttribute("src", "#ar-video");
     plane.setAttribute("width", "1");
     plane.setAttribute("height", "0.5625"); // 16:9 aspect ratio
-    plane.setAttribute("position", "0 0 0");
-    plane.setAttribute("rotation", "0 0 0"); // MindAR controls the orientation
+    plane.setAttribute("position", "0 0 0.01"); // Slightly above target
+    plane.setAttribute("rotation", "-90 0 0"); // Rotate to lie flat on target
     plane.setAttribute("scale", "1 1 1");
     anchor.appendChild(plane);
 

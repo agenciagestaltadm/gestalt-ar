@@ -93,10 +93,10 @@ html, body {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow-x: hidden !important;
+  overflow: hidden !important;
 }
 
-/* Quando AR ativo, travar scroll e fixar tela */
+/* Quando AR ativo, travar tudo */
 body.ar-active {
   overflow: hidden !important;
   position: fixed !important;
@@ -111,16 +111,16 @@ body.ar-active {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
   z-index: 1 !important;
 }
 
-/* A-Frame scene dentro do container */
-.ar-container a-scene {
+/* A-Scene deve ocupar todo o container */
+.ar-scene {
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
